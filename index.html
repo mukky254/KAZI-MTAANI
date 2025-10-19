@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kazi Mashinani - Rural Job Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        
+        header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 1rem 0; 
+        }
+        .header-content { 
+            max-width: 1200px; margin: 0 auto; padding: 0 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .auth-buttons { display: flex; gap: 10px; }
+        button { 
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); 
+            color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; 
+        }
+        
+        .top-nav { background: white; padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .nav-container { 
+            max-width: 1200px; margin: 0 auto; padding: 0 20px; 
+            display: flex; gap: 2rem; 
+        }
+        .nav-item { 
+            display: flex; flex-direction: column; align-items: center; cursor: pointer; 
+            padding: 0.5rem 1rem; border-radius: 10px; 
+        }
+        .nav-item.active { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; 
+        }
+        
+        .main-container { max-width: 1200px; margin: 2rem auto; padding: 0 20px; }
+        .container { 
+            background: white; padding: 2rem; margin-bottom: 2rem; 
+            border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { 
+            background: #2196F3; color: white; padding: 10px 20px; 
+            border: none; border-radius: 5px; cursor: pointer; 
+        }
+        
+        .job-listing { 
+            background: white; border: 1px solid #ddd; padding: 1rem; 
+            margin: 1rem 0; border-radius: 5px; 
+        }
+        .communication { display: flex; gap: 10px; margin-top: 1rem; }
+        .btn-call { background: #0078D4; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; }
+        .btn-whatsapp { background: #25D366; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; }
+        
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; 
+        }
+        .modal-content { 
+            background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 400px; 
+        }
+        
+        .message { padding: 1rem; margin: 1rem 0; border-radius: 5px; text-align: center; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-hands-helping"></i>
+                <div>
+                    <h1>Kazi Mashinani</h1>
+                    <p>Connecting Rural Workers with Local Opportunities</p>
+                </div>
+            </div>
+            <div class="auth-buttons">
+                <button onclick="toggleLanguage()" id="language-btn">EN</button>
+                <div id="auth-section">
+                    <button onclick="showAuthModal('login')">Login</button>
+                    <button onclick="showAuthModal('register')">Register</button>
+                </div>
+                <div id="user-section" style="display: none;">
+                    <span id="user-name" style="margin-right: 1rem;"></span>
+                    <button onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="top-nav">
+        <div class="nav-container">
+            <div class="nav-item active" onclick="showSection('home')">
+                <i class="fas fa-home"></i><span>Home</span>
+            </div>
+            <div class="nav-item" onclick="showSection('jobs')">
+                <i class="fas fa-briefcase"></i><span>Find Jobs</span>
+            </div>
+            <div class="nav-item" onclick="showSection('post')">
+                <i class="fas fa-plus-circle"></i><span>Post Job</span>
+            </div>
+            <div class="nav-item" onclick="showSection('profile')">
+                <i class="fas fa-user"></i><span>Profile</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <section id="home">
+            <div class="container">
+                <h1>Welcome to Kazi Mashinani</h1>
+                <p>Find jobs or post job opportunities in rural areas</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem;">
+                    <div class="container">
+                        <h3><i class="fas fa-search"></i> Looking for Work?</h3>
+                        <p>Browse available jobs in your area</p>
+                        <button class="btn" onclick="showSection('jobs')">Find Jobs</button>
+                    </div>
+                    
+                    <div class="container">
+                        <h3><i class="fas fa-briefcase"></i> Need Workers?</h3>
+                        <p>Post job opportunities for your business</p>
+                        <button class="btn" onclick="showSection('post')">Post a Job</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="jobs" style="display: none;">
+            <div class="container">
+                <h2>Available Jobs</h2>
+                <div id="jobs-list"><p>Loading jobs...</p></div>
+            </div>
+        </section>
+
+        <section id="post" style="display: none;">
+            <div class="container">
+                <h2>Post a Job</h2>
+                <div id="post-message"></div>
+                <form id="job-form">
+                    <div class="form-group">
+                        <label>Job Title</label>
+                        <input type="text" id="job-title" required placeholder="e.g., Farm Worker">
+                    </div>
+                    <div class="form-group">
+                        <label>Job Description</label>
+                        <textarea id="job-description" required placeholder="Describe the job..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="job-location" required placeholder="e.g., Nairobi">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="job-category">
+                            <option value="agriculture">Agriculture</option>
+                            <option value="construction">Construction</option>
+                            <option value="domestic">Domestic Work</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="job-phone" required placeholder="e.g., 0712345678">
+                    </div>
+                    <button type="submit" class="btn">Post Job</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="profile" style="display: none;">
+            <div class="container">
+                <div id="profile-content">
+                    <p>Please login to view your profile</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="modal" id="auth-modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 id="auth-modal-title">Login</h3>
+                <button onclick="closeAuthModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="submit" class="btn" style="flex: 1;">Login</button>
+                    <button type="button" class="btn" style="background: #666;" onclick="showRegisterForm()">Register</button>
+                </div>
+            </form>
+
+            <form id="register-form" style="display: none;">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="register-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="register-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <div class="form-group">
+                    <label>I am a...</label>
+                    <select id="register-role" onchange="toggleEmployeeFields()">
+                        <option value="employer">Employer</option>
+                        <option value="employee">Employee</option>
+                    </select>
+                </div>
+                <div id="employee-fields" style="display: none;">
+                    <div class="form-group">
+                        <label>Specialization</label>
+                        <input type="text" id="register-specialization">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="submit" class="btn" style="flex: 1;">Register</button>
+                    <button type="button" class="btn" style="background: #666;" onclick="showLoginForm()">Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ IMPORTANT: Replace this with your actual Railway backend URL
+        const API_BASE_URL = 'https://your-backend-name.up.railway.app/api';
+        
+        let currentUser = null;
+        let currentLanguage = 'en';
+        let currentJobs = [];
+
+        // Language translations
+        const translations = {
+            en: { 'login': 'Login', 'register': 'Register', 'logout': 'Logout', 'home': 'Home', 'find-jobs': 'Find Jobs', 'post-job': 'Post Job', 'profile': 'Profile' },
+            sw: { 'login': 'Ingia', 'register': 'Jisajili', 'logout': 'Toka', 'home': 'Nyumbani', 'find-jobs': 'Tafuta Kazi', 'post-job': 'Tangaza Kazi', 'profile': 'Wasifu' }
+        };
+
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'sw' : 'en';
+            document.getElementById('language-btn').textContent = currentLanguage.toUpperCase();
+            updateTextContent();
+        }
+
+        function updateTextContent() {
+            document.querySelectorAll('.nav-item span').forEach((span, index) => {
+                const keys = ['home', 'find-jobs', 'post-job', 'profile'];
+                if (translations[currentLanguage][keys[index]]) {
+                    span.textContent = translations[currentLanguage][keys[index]];
+                }
+            });
+            
+            document.querySelectorAll('#auth-section button').forEach((button, index) => {
+                const keys = ['login', 'register'];
+                if (translations[currentLanguage][keys[index]]) {
+                    button.textContent = translations[currentLanguage][keys[index]];
+                }
+            });
+        }
+
+        // Auth functions
+        function showAuthModal(type) {
+            document.getElementById('auth-modal').style.display = 'flex';
+            if (type === 'login') showLoginForm(); else showRegisterForm();
+        }
+
+        function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
+
+        function showLoginForm() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('auth-modal-title').textContent = 'Login';
+        }
+
+        function showRegisterForm() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+            document.getElementById('auth-modal-title').textContent = 'Register';
+        }
+
+        function toggleEmployeeFields() {
+            document.getElementById('employee-fields').style.display = 
+                document.getElementById('register-role').value === 'employee' ? 'block' : 'none';
+        }
+
+        // Login form
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    currentUser = data.user;
+                    alert('Login successful!');
+                    closeAuthModal();
+                    updateUI();
+                    loadDashboard();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Login failed');
+            }
+        });
+
+        // Register form
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const userData = {
+                name: document.getElementById('register-name').value,
+                email: document.getElementById('register-email').value,
+                password: document.getElementById('register-password').value,
+                role: document.getElementById('register-role').value,
+                specialization: document.getElementById('register-specialization').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/register`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    currentUser = data.user;
+                    alert('Registration successful!');
+                    closeAuthModal();
+                    updateUI();
+                    loadDashboard();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Registration failed');
+            }
+        });
+
+        function updateUI() {
+            if (currentUser) {
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('user-section').style.display = 'flex';
+                document.getElementById('user-name').textContent = currentUser.name;
+            } else {
+                document.getElementById('auth-section').style.display = 'flex';
+                document.getElementById('user-section').style.display = 'none';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+            updateUI();
+            showSection('home');
+            alert('Logged out successfully');
+        }
+
+        // Job functions
+        async function loadJobs() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/jobs`);
+                if (response.ok) {
+                    currentJobs = await response.json();
+                    displayJobs();
+                }
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+            }
+        }
+
+        function displayJobs() {
+            const jobsList = document.getElementById('jobs-list');
+            if (!jobsList) return;
+
+            if (currentJobs.length === 0) {
+                jobsList.innerHTML = '<p>No jobs available</p>';
+                return;
+            }
+
+            jobsList.innerHTML = currentJobs.map(job => `
+                <div class="job-listing">
+                    <h3>${job.title}</h3>
+                    <p>${job.description}</p>
+                    <p><strong>Location:</strong> ${job.location}</p>
+                    <p><strong>Category:</strong> ${job.category}</p>
+                    
+                    <div class="communication">
+                        ${currentUser ? `
+                            <a href="tel:${job.phone}" class="btn-call"><i class="fas fa-phone"></i> Call</a>
+                            <a href="https://wa.me/${job.phone}" class="btn-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                            ${currentUser.role === 'employee' ? `<button class="btn" onclick="applyForJob('${job._id}')">Apply Now</button>` : ''}
+                        ` : `<button class="btn" onclick="showAuthModal('login')">Login to Contact</button>`}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function applyForJob(jobId) {
+            if (!currentUser) { showAuthModal('login'); return; }
+
+            try {
+                const applicationData = {
+                    jobId: jobId,
+                    employeeId: currentUser.id,
+                    employeeName: currentUser.name,
+                    employeeSpecialization: currentUser.specialization,
+                    employeePhone: currentUser.phone
+                };
+
+                const response = await fetch(`${API_BASE_URL}/applications`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(applicationData)
+                });
+
+                if (response.ok) {
+                    alert('Application submitted successfully!');
+                } else {
+                    alert('Application failed');
+                }
+            } catch (error) {
+                alert('Application error');
+            }
+        }
+
+        // Post job form
+        document.getElementById('job-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!currentUser) { showAuthModal('login'); return; }
+
+            const jobData = {
+                title: document.getElementById('job-title').value,
+                description: document.getElementById('job-description').value,
+                location: document.getElementById('job-location').value,
+                category: document.getElementById('job-category').value,
+                phone: document.getElementById('job-phone').value,
+                employerId: currentUser.id,
+                employerName: currentUser.name
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/jobs`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(jobData)
+                });
+
+                if (response.ok) {
+                    alert('Job posted successfully!');
+                    document.getElementById('job-form').reset();
+                    loadJobs();
+                } else {
+                    alert('Failed to post job');
+                }
+            } catch (error) {
+                alert('Network error');
+            }
+        });
+
+        // Dashboard
+        async function loadDashboard() {
+            if (!currentUser) {
+                document.getElementById('profile-content').innerHTML = '<p>Please login to view your profile</p>';
+                return;
+            }
+
+            if (currentUser.role === 'employer') {
+                await loadEmployerDashboard();
+            } else {
+                await loadEmployeeDashboard();
+            }
+        }
+
+        async function loadEmployerDashboard() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/jobs/my-jobs/${currentUser.id}`);
+                if (!response.ok) throw new Error('Failed to load jobs');
+                
+                const myJobs = await response.json();
+                
+                let html = `<h2>Welcome, ${currentUser.name}</h2><p>Employer Dashboard</p><div style="margin: 2rem 0;"><h3>Your Posted Jobs (${myJobs.length})</h3>`;
+
+                if (myJobs.length === 0) {
+                    html += '<p>You haven\'t posted any jobs yet.</p>';
+                } else {
+                    for (let job of myJobs) {
+                        const appsResponse = await fetch(`${API_BASE_URL}/applications/job/${job._id}`);
+                        const applications = appsResponse.ok ? await appsResponse.json() : [];
+                        
+                        html += `
+                            <div class="job-listing">
+                                <h4>${job.title}</h4>
+                                <p>${job.description}</p>
+                                <p><strong>Location:</strong> ${job.location}</p>
+                                <p><strong>Applicants:</strong> ${applications.length}</p>
+                                
+                                ${applications.length > 0 ? `
+                                    <div style="margin-top: 1rem;">
+                                        <h5>Applicants:</h5>
+                                        ${applications.map(app => `
+                                            <div style="background: #f9f9f9; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                                                <strong>${app.employeeName}</strong>
+                                                ${app.employeeSpecialization ? ` - ${app.employeeSpecialization}` : ''}
+                                                <br>
+                                                <small>Phone: ${app.employeePhone || 'Not provided'}</small>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }
+                }
+
+                html += `</div>`;
+                document.getElementById('profile-content').innerHTML = html;
+            } catch (error) {
+                document.getElementById('profile-content').innerHTML = '<p>Error loading dashboard</p>';
+            }
+        }
+
+        async function loadEmployeeDashboard() {
+            document.getElementById('profile-content').innerHTML = `
+                <h2>Welcome, ${currentUser.name}</h2>
+                <p>Employee Dashboard</p>
+                ${currentUser.specialization ? `<p><strong>Specialization:</strong> ${currentUser.specialization}</p>` : ''}
+                <div style="margin-top: 2rem;">
+                    <h3>Available Jobs</h3>
+                    <div id="employee-jobs-list"></div>
+                </div>
+            `;
+
+            await loadJobs();
+            displayJobsForEmployee();
+        }
+
+        function displayJobsForEmployee() {
+            const jobsList = document.getElementById('employee-jobs-list');
+            if (!jobsList) return;
+
+            jobsList.innerHTML = currentJobs.map(job => `
+                <div class="job-listing">
+                    <h4>${job.title}</h4>
+                    <p>${job.description}</p>
+                    <p><strong>Location:</strong> ${job.location}</p>
+                    <p><strong>Category:</strong> ${job.category}</p>
+                    
+                    <div class="communication">
+                        <a href="tel:${job.phone}" class="btn-call"><i class="fas fa-phone"></i> Call: ${job.phone}</a>
+                        <a href="https://wa.me/${job.phone}" class="btn-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('section').forEach(section => {
+                section.style.display = 'none';
+            });
+            document.getElementById(sectionId).style.display = 'block';
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            if (sectionId === 'jobs') loadJobs();
+            else if (sectionId === 'profile') loadDashboard();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateUI();
+            }
+            loadJobs();
+        });
+
+        window.showSection = showSection;
+        window.showAuthModal = showAuthModal;
+        window.closeAuthModal = closeAuthModal;
+        window.showLoginForm = showLoginForm;
+        window.showRegisterForm = showRegisterForm;
+        window.toggleEmployeeFields = toggleEmployeeFields;
+        window.toggleLanguage = toggleLanguage;
+        window.logout = logout;
+        window.applyForJob = applyForJob;
+    </script>
+</body>
+</html>
