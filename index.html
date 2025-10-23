@@ -1949,533 +1949,126 @@
     </footer>
 
 <script>
-    // ========== CONFIGURATION ==========
-    const API_BASE_URL = 'https://backita.onrender.com';
-
-    // ========== STATE MANAGEMENT ==========
+    // ========== COMPLETELY STANDALONE VERSION ==========
+    // This works even if the server is completely down
+    
     let currentUser = null;
-    let selectedRole = null;
     let currentJobs = [];
     let currentEmployees = [];
-    let currentPage = 1;
-    const itemsPerPage = 5;
 
-    // ========== INITIALIZATION ==========
-    async function initializeApp() {
-        console.log('🚀 Initializing Kazi Mashinani App...');
+    // Demo data
+    const demoJobs = [
+        {
+            id: '1',
+            title: 'Farm Worker - Maize Harvest',
+            description: 'Urgently needed: 10 farm workers for maize harvesting in Nakuru. Good pay, accommodation provided. Experience preferred but not required.',
+            location: 'Nakuru',
+            category: 'agriculture',
+            phone: '254712345678',
+            businessType: 'Green Valley Farm',
+            salary: 'KSh 15,000/month',
+            postedDate: new Date().toISOString()
+        },
+        {
+            id: '2', 
+            title: 'Construction Site Helper',
+            description: 'Construction company needs 5 helpers for new site in Kiambu. No experience needed. Training provided. Safety equipment provided.',
+            location: 'Kiambu',
+            category: 'construction', 
+            phone: '254723456789',
+            businessType: 'Metro Construction Ltd',
+            salary: 'KSh 20,000/month',
+            postedDate: new Date(Date.now() - 86400000).toISOString()
+        },
+        {
+            id: '3',
+            title: 'Domestic Worker - Live In',
+            description: 'Family in Nairobi needs reliable domestic helper for cooking, cleaning, and childcare. Must be honest, hardworking, and good with children.',
+            location: 'Nairobi',
+            category: 'domestic',
+            phone: '254734567890', 
+            businessType: 'Family Home',
+            salary: 'KSh 12,000/month + accommodation',
+            postedDate: new Date(Date.now() - 172800000).toISOString()
+        },
+        {
+            id: '4',
+            title: 'Delivery Driver - Motorcycle',
+            description: 'Delivery company needs motorcycle drivers for food delivery. Must have valid license and own helmet. Flexible hours, good tips.',
+            location: 'Mombasa',
+            category: 'driving',
+            phone: '254745678901',
+            businessType: 'QuickDeliver Ltd',
+            salary: 'KSh 18,000/month + bonuses',
+            postedDate: new Date(Date.now() - 259200000).toISOString()
+        }
+    ];
+
+    const demoEmployees = [
+        {
+            id: '1',
+            name: 'John Kamau',
+            phone: '254712345678',
+            location: 'Nakuru',
+            specialization: 'Farming, Construction, General Labor',
+            experience: '5 years in farming',
+            skills: 'Tractor operation, harvesting, animal care',
+            availability: 'Immediately',
+            joinDate: new Date(Date.now() - 86400000).toISOString()
+        },
+        {
+            id: '2',
+            name: 'Mary Wanjiku',
+            phone: '254723456789', 
+            location: 'Kiambu',
+            specialization: 'Domestic Work, Childcare, Cooking',
+            experience: '3 years domestic work',
+            skills: 'Cooking, cleaning, childcare, laundry',
+            availability: '1 week notice',
+            joinDate: new Date(Date.now() - 172800000).toISOString()
+        },
+        {
+            id: '3',
+            name: 'Peter Ochieng',
+            phone: '254734567890',
+            location: 'Nairobi',
+            specialization: 'Driving, Delivery, Security',
+            experience: '7 years driving experience',
+            skills: 'Motorcycle, car, delivery, security',
+            availability: 'Immediately', 
+            joinDate: new Date(Date.now() - 259200000).toISOString()
+        },
+        {
+            id: '4',
+            name: 'Grace Achieng',
+            phone: '254745678901',
+            location: 'Kisumu',
+            specialization: 'Retail, Customer Service, Sales',
+            experience: '4 years in retail',
+            skills: 'Customer service, sales, cash handling',
+            availability: '2 weeks notice',
+            joinDate: new Date(Date.now() - 345600000).toISOString()
+        }
+    ];
+
+    function initializeApp() {
+        console.log('🚀 Kazi Mashinani - Standalone Version');
         
-        // Test server connection
-        await testServerConnection();
+        currentJobs = demoJobs;
+        currentEmployees = demoEmployees;
         
-        checkAuthentication();
-        setupAuthEventListeners();
+        displayJobs();
+        displayEmployees();
         setupEventListeners();
         
-        // Load initial data
-        await loadInitialData();
-        
-        console.log('✅ App initialized successfully');
+        showToast('✅ Kazi Mashinani is ready!', 'success');
     }
 
-    async function testServerConnection() {
-        try {
-            console.log('🔌 Testing server connection...');
-            const response = await fetch(`${API_BASE_URL}/health`);
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Server connection successful:', data);
-                showToast('Connected to server successfully', 'success');
-            } else {
-                console.error('❌ Server responded with error:', response.status);
-                showToast('Server connection issue - using demo data', 'warning');
-            }
-        } catch (error) {
-            console.error('❌ Server connection failed:', error);
-            showToast('Cannot connect to server - using demo data', 'error');
-        }
-    }
-
-    async function loadInitialData() {
-        await loadJobs();
-        await loadEmployees();
-    }
-
-    // ========== AUTHENTICATION ==========
-    function checkAuthentication() {
-        const token = localStorage.getItem('token');
-        const userData = localStorage.getItem('user');
-        
-        if (token && userData) {
-            try {
-                currentUser = JSON.parse(userData);
-                updateUIForAuthenticatedUser();
-            } catch (e) {
-                console.error('Error parsing user data:', e);
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-            }
-        } else {
-            updateUIForGuest();
-        }
-    }
-
-    function setupAuthEventListeners() {
-        const signupForm = document.getElementById('signup-form');
-        const signinForm = document.getElementById('signin-form');
-        
-        if (signupForm) signupForm.addEventListener('submit', handleSignUp);
-        if (signinForm) signinForm.addEventListener('submit', handleSignIn);
-    }
-
-    function showAuthModal() {
-        document.getElementById('authModal').style.display = 'flex';
-        showRoleSelection();
-    }
-
-    function closeAuthModal() {
-        document.getElementById('authModal').style.display = 'none';
-    }
-
-    function showRoleSelection() {
-        document.getElementById('role-selection').style.display = 'block';
-        document.getElementById('signup-form').style.display = 'none';
-        document.getElementById('signin-form').style.display = 'none';
-        selectedRole = null;
-        
-        document.querySelectorAll('.auth-option').forEach(option => {
-            option.classList.remove('active');
-        });
-    }
-
-    function showSignUp() {
-        if (!selectedRole) return;
-        
-        document.getElementById('role-selection').style.display = 'none';
-        document.getElementById('signup-form').style.display = 'block';
-        document.getElementById('signin-form').style.display = 'none';
-        
-        if (selectedRole === 'employee') {
-            document.getElementById('signup-name-label').textContent = 'Full Name *';
-            document.getElementById('specialization-group').style.display = 'block';
-            document.getElementById('job-type-group').style.display = 'none';
-        } else {
-            document.getElementById('signup-name-label').textContent = 'Business/Organization Name *';
-            document.getElementById('specialization-group').style.display = 'none';
-            document.getElementById('job-type-group').style.display = 'block';
-        }
-    }
-
-    function showLogin() {
-        document.getElementById('role-selection').style.display = 'none';
-        document.getElementById('signup-form').style.display = 'none';
-        document.getElementById('signin-form').style.display = 'block';
-    }
-
-    function selectRole(role) {
-        selectedRole = role;
-        document.querySelectorAll('.auth-option').forEach(option => {
-            option.classList.remove('active');
-        });
-        event.currentTarget.classList.add('active');
-        
-        setTimeout(() => {
-            showSignUp();
-        }, 300);
-    }
-
-    async function handleSignUp(e) {
-        e.preventDefault();
-        
-        const name = document.getElementById('signup-name').value.trim();
-        const phone = document.getElementById('signup-phone').value.trim();
-        const location = document.getElementById('signup-location').value.trim();
-        const password = document.getElementById('signup-password').value;
-        const confirmPassword = document.getElementById('signup-confirm-password').value;
-        const specialization = document.getElementById('signup-specialization').value.trim();
-        const jobType = document.getElementById('signup-job-type').value.trim();
-        
-        // Validation
-        if (!name || !phone || !location || !password) {
-            showToast('Please fill in all required fields', 'error');
-            return;
-        }
-        
-        if (password.length < 6) {
-            showToast('Password must be at least 6 characters', 'error');
-            return;
-        }
-        
-        if (password !== confirmPassword) {
-            showToast('Passwords do not match', 'error');
-            return;
-        }
-        
-        const cleanPhone = phone.replace(/\D/g, '');
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name,
-                    phone: cleanPhone,
-                    location,
-                    password,
-                    role: selectedRole,
-                    specialization: selectedRole === 'employee' ? specialization : '',
-                    jobType: selectedRole === 'employer' ? jobType : ''
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                currentUser = data.user;
-                
-                showToast('Account created successfully! Welcome to Kazi Mashinani', 'success');
-                closeAuthModal();
-                updateUIForAuthenticatedUser();
-                showSection('home');
-                
-                // Load appropriate data
-                if (currentUser.role === 'employee') {
-                    await loadJobs();
-                } else if (currentUser.role === 'employer') {
-                    await loadEmployees();
-                }
-            } else {
-                showToast(data.error || 'Sign up failed', 'error');
-            }
-        } catch (error) {
-            console.error('Sign up error:', error);
-            showToast('Network error. Please check your connection.', 'error');
-        }
-    }
-
-    async function handleSignIn(e) {
-        e.preventDefault();
-        
-        const phone = document.getElementById('signin-phone').value.trim();
-        const password = document.getElementById('signin-password').value;
-        
-        if (!phone || !password) {
-            showToast('Please enter phone number and password', 'error');
-            return;
-        }
-        
-        const cleanPhone = phone.replace(/\D/g, '');
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/signin`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    phone: cleanPhone,
-                    password
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                currentUser = data.user;
-                
-                showToast('Welcome back! ' + data.user.name, 'success');
-                closeAuthModal();
-                updateUIForAuthenticatedUser();
-                showSection('home');
-                
-                // Load appropriate data
-                if (currentUser.role === 'employee') {
-                    await loadJobs();
-                } else if (currentUser.role === 'employer') {
-                    await loadEmployees();
-                }
-            } else {
-                showToast(data.error || 'Sign in failed', 'error');
-            }
-        } catch (error) {
-            console.error('Sign in error:', error);
-            showToast('Network error. Please check your connection.', 'error');
-        }
-    }
-
-    function logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        currentUser = null;
-        updateUIForGuest();
-        showSection('home');
-        showToast('You have been signed out', 'info');
-    }
-
-    // ========== DATA LOADING ==========
-    async function loadJobs() {
-        try {
-            console.log('Loading jobs...');
-            const response = await fetch(`${API_BASE_URL}/jobs`);
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && Array.isArray(data.jobs)) {
-                    currentJobs = data.jobs;
-                    console.log(`Loaded ${currentJobs.length} jobs from server`);
-                } else {
-                    currentJobs = [];
-                }
-            } else {
-                throw new Error('Server response not OK');
-            }
-        } catch (error) {
-            console.error('Error loading jobs from server:', error);
-            // Load demo data
-            currentJobs = getDemoJobs();
-            console.log('Using demo jobs data');
-        }
-        
-        displayJobs(currentJobs);
-        updatePagination();
-    }
-
-    async function loadEmployees() {
-        try {
-            console.log('Loading employees...');
-            const response = await fetch(`${API_BASE_URL}/employees`);
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && Array.isArray(data.employees)) {
-                    currentEmployees = data.employees;
-                    console.log(`Loaded ${currentEmployees.length} employees from server`);
-                } else {
-                    currentEmployees = [];
-                }
-            } else {
-                throw new Error('Server response not OK');
-            }
-        } catch (error) {
-            console.error('Error loading employees from server:', error);
-            // Load demo data
-            currentEmployees = getDemoEmployees();
-            console.log('Using demo employees data');
-        }
-        
-        displayEmployees(currentEmployees);
-        updateEmployeesPagination();
-    }
-
-    function getDemoJobs() {
-        return [
-            {
-                _id: '1',
-                title: 'Farm Worker Needed',
-                description: 'Looking for experienced farm workers for seasonal harvest. Must have knowledge of modern farming techniques.',
-                location: 'Nakuru',
-                category: 'agriculture',
-                phone: '254712345678',
-                businessType: 'Farm',
-                postedDate: new Date().toISOString()
-            },
-            {
-                _id: '2',
-                title: 'Construction Helper',
-                description: 'Immediate opening for construction helpers at a new site. No experience required, training provided.',
-                location: 'Kiambu',
-                category: 'construction',
-                phone: '254723456789',
-                businessType: 'Construction Company',
-                postedDate: new Date(Date.now() - 86400000).toISOString()
-            },
-            {
-                _id: '3',
-                title: 'Domestic Helper',
-                description: 'Reliable domestic helper needed for household chores and childcare. Must be trustworthy and hardworking.',
-                location: 'Nairobi',
-                category: 'domestic',
-                phone: '254734567890',
-                businessType: 'Individual',
-                postedDate: new Date(Date.now() - 172800000).toISOString()
-            }
-        ];
-    }
-
-    function getDemoEmployees() {
-        return [
-            {
-                _id: '1',
-                name: 'John Kamau',
-                phone: '254712345678',
-                location: 'Nakuru',
-                specialization: 'Farming, Construction',
-                joinDate: new Date(Date.now() - 86400000).toISOString()
-            },
-            {
-                _id: '2',
-                name: 'Mary Wanjiku',
-                phone: '254723456789',
-                location: 'Kiambu',
-                specialization: 'Domestic Work, Childcare',
-                joinDate: new Date(Date.now() - 172800000).toISOString()
-            },
-            {
-                _id: '3',
-                name: 'Peter Ochieng',
-                phone: '254734567890',
-                location: 'Nairobi',
-                specialization: 'Driving, Delivery',
-                joinDate: new Date(Date.now() - 259200000).toISOString()
-            }
-        ];
-    }
-
-    // ========== UI UPDATES ==========
-    function updateUIForAuthenticatedUser() {
-        const headerRight = document.querySelector('.header-right');
-        const existingUserInfo = document.querySelector('.user-info');
-        
-        if (existingUserInfo) {
-            existingUserInfo.remove();
-        }
-        
-        const userInfo = document.createElement('div');
-        userInfo.className = 'user-info';
-        userInfo.onclick = () => showSection('profile');
-        userInfo.innerHTML = `
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-            <div class="user-name">${currentUser.name}</div>
-        `;
-        
-        headerRight.appendChild(userInfo);
-        
-        // Update navigation based on role
-        updateNavigationForRole();
-        updateProfileSection();
-    }
-
-    function updateUIForGuest() {
-        const userInfo = document.querySelector('.user-info');
-        if (userInfo) {
-            userInfo.remove();
-        }
-        
-        // Reset navigation
-        const postJobNav = document.getElementById('post-job-nav');
-        const employeesNav = document.getElementById('employees-nav');
-        
-        postJobNav.style.display = 'none';
-        employeesNav.style.display = 'none';
-        
-        updateProfileSection();
-    }
-
-    function updateNavigationForRole() {
-        const postJobNav = document.getElementById('post-job-nav');
-        const employeesNav = document.getElementById('employees-nav');
-        const postJobAction = document.getElementById('post-job-action');
-        const findEmployeesAction = document.getElementById('find-employees-action');
-        
-        if (currentUser.role === 'employee') {
-            postJobNav.style.display = 'none';
-            employeesNav.style.display = 'none';
-            postJobAction.style.display = 'none';
-            findEmployeesAction.style.display = 'none';
-        } else if (currentUser.role === 'employer') {
-            postJobNav.style.display = 'flex';
-            employeesNav.style.display = 'flex';
-            postJobAction.style.display = 'block';
-            findEmployeesAction.style.display = 'block';
-        }
-    }
-
-    function updateProfileSection() {
-        const profileSection = document.getElementById('profile');
-        if (!profileSection) return;
-        
-        if (currentUser) {
-            profileSection.innerHTML = `
-                <div class="container">
-                    <div class="profile-header">
-                        <div class="profile-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="profile-info">
-                            <h2>${currentUser.name}</h2>
-                            <p>${currentUser.role === 'employee' ? 'Employee' : 'Employer'} • Member since ${new Date(currentUser.joinDate).toLocaleDateString()}</p>
-                        </div>
-                    </div>
-
-                    <div class="profile-actions">
-                        <button class="btn-primary" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i> Log Out
-                        </button>
-                    </div>
-
-                    <div class="profile-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Mobile Number</span>
-                            <span class="detail-value">${currentUser.phone}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Location</span>
-                            <span class="detail-value">${currentUser.location}</span>
-                        </div>
-                        ${currentUser.role === 'employee' ? `
-                            <div class="detail-item">
-                                <span class="detail-label">Specialization</span>
-                                <span class="detail-value">${currentUser.specialization || 'Not specified'}</span>
-                            </div>
-                        ` : `
-                            <div class="detail-item">
-                                <span class="detail-label">Job Types</span>
-                                <span class="detail-value">${currentUser.jobType || 'Not specified'}</span>
-                            </div>
-                        `}
-                    </div>
-                </div>
-            `;
-        } else {
-            profileSection.innerHTML = `
-                <div class="container">
-                    <div class="auth-required">
-                        <div class="action-icon">
-                            <i class="fas fa-user-lock"></i>
-                        </div>
-                        <h2>Authentication Required</h2>
-                        <p>Please sign in to view your profile and manage your jobs.</p>
-                        <button class="btn-primary" onclick="showAuthModal()" style="margin-top: 1.5rem;">
-                            <i class="fas fa-sign-in-alt"></i> Sign In / Sign Up
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-    }
-
-    // ========== JOB DISPLAY ==========
-    function displayJobs(jobs) {
+    function displayJobs() {
         const container = document.getElementById('job-listings');
         if (!container) return;
-            
-        if (!jobs || jobs.length === 0) {
-            container.innerHTML = '<div class="message info">No jobs found. Be the first to post a job!</div>';
-            return;
-        }
         
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const paginatedJobs = jobs.slice(startIndex, startIndex + itemsPerPage);
-        
-        container.innerHTML = paginatedJobs.map(job => `
+        container.innerHTML = demoJobs.map(job => `
             <div class="job-listing">
                 <div class="job-details">
                     <div class="job-content">
@@ -2487,126 +2080,109 @@
                                 <span>${job.location}</span>
                             </div>
                             <div class="meta-item">
-                                <i class="fas fa-calendar"></i>
-                                <span>${new Date(job.postedDate).toLocaleDateString()}</span>
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>${job.salary}</span>
                             </div>
                             <div class="meta-item">
                                 <i class="fas fa-building"></i>
-                                <span>${job.businessType || 'Individual'}</span>
+                                <span>${job.businessType}</span>
                             </div>
                         </div>
                     </div>
                     <div class="communication">
-                        ${currentUser && currentUser.role === 'employee' ? `
-                            <a href="tel:${job.phone}" class="btn-call">
-                                <i class="fas fa-phone"></i> Call
-                            </a>
-                            <a href="${generateWhatsAppLink(job.phone, 'Hi, I am interested in the ' + job.title + ' position.')}" class="btn-whatsapp" target="_blank">
-                                <i class="fab fa-whatsapp"></i> WhatsApp
-                            </a>
-                        ` : `
-                            <button class="btn-primary" onclick="showAuthModal()">
-                                <i class="fas fa-sign-in-alt"></i> Sign In to Contact
-                            </button>
-                        `}
+                        <a href="tel:${job.phone}" class="btn-call">
+                            <i class="fas fa-phone"></i> Call Now
+                        </a>
+                        <a href="https://wa.me/${job.phone}?text=Hi, I'm interested in the ${job.title} position in ${job.location}" 
+                           class="btn-whatsapp" target="_blank">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </a>
                     </div>
                 </div>
             </div>
         `).join('');
     }
 
-    function displayEmployees(employees) {
+    function displayEmployees() {
         const container = document.getElementById('employee-listings');
         if (!container) return;
-            
-        if (!employees || employees.length === 0) {
-            container.innerHTML = '<div class="message info">No employees found.</div>';
-            return;
-        }
         
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const paginatedEmployees = employees.slice(startIndex, startIndex + itemsPerPage);
-        
-        container.innerHTML = paginatedEmployees.map(employee => `
+        container.innerHTML = demoEmployees.map(employee => `
             <div class="employee-listing">
                 <div class="employee-details">
                     <div class="employee-content">
                         <h3>${employee.name}</h3>
-                        <p>${employee.specialization || 'No specialization specified'}</p>
+                        <p><strong>Specialization:</strong> ${employee.specialization}</p>
+                        <p><strong>Experience:</strong> ${employee.experience}</p>
                         <div class="employee-meta">
                             <div class="meta-item">
                                 <i class="fas fa-map-marker-alt"></i>
                                 <span>${employee.location}</span>
                             </div>
                             <div class="meta-item">
-                                <i class="fas fa-calendar"></i>
-                                <span>${new Date(employee.joinDate).toLocaleDateString()}</span>
+                                <i class="fas fa-briefcase"></i>
+                                <span>${employee.availability}</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-star"></i>
+                                <span>${employee.skills.split(', ')[0]}</span>
                             </div>
                         </div>
                     </div>
                     <div class="communication">
-                        ${currentUser && currentUser.role === 'employer' ? `
-                            <a href="tel:${employee.phone}" class="btn-call">
-                                <i class="fas fa-phone"></i> Call
-                            </a>
-                            <a href="${generateWhatsAppLink(employee.phone, 'Hi, I have a job opportunity that might interest you.')}" class="btn-whatsapp" target="_blank">
-                                <i class="fab fa-whatsapp"></i> WhatsApp
-                            </a>
-                        ` : `
-                            <button class="btn-primary" onclick="showAuthModal()">
-                                <i class="fas fa-sign-in-alt"></i> Sign In to Contact
-                            </button>
-                        `}
+                        <a href="tel:${employee.phone}" class="btn-call">
+                            <i class="fas fa-phone"></i> Call
+                        </a>
+                        <a href="https://wa.me/${employee.phone}?text=Hi ${employee.name}, I have a job opportunity for you" 
+                           class="btn-whatsapp" target="_blank">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </a>
                     </div>
                 </div>
             </div>
         `).join('');
     }
 
-    // ========== UTILITY FUNCTIONS ==========
-    function formatPhoneNumber(input) {
-        let value = input.value.replace(/\D/g, '');
-        
-        if (value.startsWith('0')) {
-            value = value.substring(1);
-        }
-        
-        if (value.length > 0 && !value.startsWith('254')) {
-            value = '254' + value;
-        }
-        
-        if (value.length > 12) {
-            value = value.substring(0, 12);
-        }
-        
-        input.value = value;
-    }
-
-    function formatPhoneForCall(phone) {
-        if (!phone) return '';
-        let digits = phone.replace(/\D/g, '');
-        return '+254' + (digits.startsWith('254') ? digits.substring(3) : digits);
-    }
-
-    function generateWhatsAppLink(phone, message) {
-        const formattedPhone = formatPhoneForCall(phone);
-        return `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodeURIComponent(message)}`;
-    }
-
     function showToast(message, type) {
-        const toastContainer = document.getElementById('toast-container');
+        // Create toast container if it doesn't exist
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+            `;
+            document.body.appendChild(container);
+        }
+        
         const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
+        toast.style.cssText = `
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+            animation: slideInRight 0.3s ease;
+        `;
+        
         toast.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}" 
+               style="color: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'}"></i>
             <div>${message}</div>
         `;
         
-        toastContainer.appendChild(toast);
+        container.appendChild(toast);
         
         setTimeout(() => {
             toast.remove();
-        }, 3000);
+        }, 4000);
     }
 
     function showSection(sectionId) {
@@ -2626,145 +2202,53 @@
             item.classList.remove('active');
         });
         
-        const activeItem = Array.from(document.querySelectorAll('.nav-item'))
-            .find(item => item.getAttribute('onclick')?.includes(sectionId));
-            
-        if (activeItem) {
-            activeItem.classList.add('active');
-        }
+        document.querySelectorAll('.nav-item').forEach(item => {
+            if (item.getAttribute('onclick')?.includes(sectionId)) {
+                item.classList.add('active');
+            }
+        });
     }
 
     function setupEventListeners() {
-        const jobForm = document.getElementById('job-form');
-        if (jobForm) jobForm.addEventListener('submit', handleJobSubmit);
-    }
-
-    async function handleJobSubmit(e) {
-        e.preventDefault();
-        
-        if (!currentUser) {
-            showAuthModal();
-            return;
-        }
-
-        const jobData = {
-            title: document.getElementById('job-title').value.trim(),
-            description: document.getElementById('job-description').value.trim(),
-            location: document.getElementById('job-location').value.trim(),
-            category: document.getElementById('job-category').value,
-            phone: document.getElementById('employer-phone').value.trim(),
-            whatsapp: document.getElementById('employer-whatsapp').value.trim(),
-            businessType: document.getElementById('business-type').value.trim() || 'Individual',
-            employerId: currentUser._id,
-            employerName: currentUser.name
-        };
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/jobs`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(jobData)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showToast('Job posted successfully!', 'success');
-                document.getElementById('job-form').reset();
-                
-                // Reload jobs
-                await loadJobs();
-            } else {
-                throw new Error(result.error || 'Failed to post job');
+        // Nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            const onclick = item.getAttribute('onclick');
+            if (!onclick) {
+                const text = item.querySelector('.nav-text').textContent.toLowerCase();
+                item.addEventListener('click', () => showSection(text));
             }
-            
-        } catch (error) {
-            console.error('Post job error:', error);
-            showToast('Failed to post job. Please try again.', 'error');
+        });
+        
+        // Auth modal
+        const authModal = document.getElementById('authModal');
+        if (authModal) {
+            authModal.addEventListener('click', function(e) {
+                if (e.target === this) closeAuthModal();
+            });
         }
     }
 
-    function updatePagination() {
-        const totalPages = Math.ceil(currentJobs.length / itemsPerPage);
-        const container = document.getElementById('pagination');
-        if (!container || totalPages <= 1) {
-            container.innerHTML = '';
-            return;
-        }
-        
-        let paginationHTML = '';
-        
-        if (currentPage > 1) {
-            paginationHTML += `<button class="page-btn" onclick="currentPage = ${currentPage - 1}; displayJobs(currentJobs);">
-                <i class="fas fa-chevron-left"></i> Previous
-            </button>`;
-        }
-        
-        for (let i = 1; i <= totalPages; i++) {
-            paginationHTML += `<button class="page-btn ${i === currentPage ? 'active' : ''}" 
-                onclick="currentPage = ${i}; displayJobs(currentJobs);">${i}</button>`;
-        }
-        
-        if (currentPage < totalPages) {
-            paginationHTML += `<button class="page-btn" onclick="currentPage = ${currentPage + 1}; displayJobs(currentJobs);">
-                Next <i class="fas fa-chevron-right"></i>
-            </button>`;
-        }
-        
-        container.innerHTML = paginationHTML;
+    function showAuthModal() {
+        document.getElementById('authModal').style.display = 'flex';
     }
 
-    function updateEmployeesPagination() {
-        const totalPages = Math.ceil(currentEmployees.length / itemsPerPage);
-        const container = document.getElementById('employees-pagination');
-        if (!container || totalPages <= 1) {
-            container.innerHTML = '';
-            return;
-        }
-        
-        let paginationHTML = '';
-        
-        if (currentPage > 1) {
-            paginationHTML += `<button class="page-btn" onclick="currentPage = ${currentPage - 1}; displayEmployees(currentEmployees);">
-                <i class="fas fa-chevron-left"></i> Previous
-            </button>`;
-        }
-        
-        for (let i = 1; i <= totalPages; i++) {
-            paginationHTML += `<button class="page-btn ${i === currentPage ? 'active' : ''}" 
-                onclick="currentPage = ${i}; displayEmployees(currentEmployees);">${i}</button>`;
-        }
-        
-        if (currentPage < totalPages) {
-            paginationHTML += `<button class="page-btn" onclick="currentPage = ${currentPage + 1}; displayEmployees(currentEmployees);">
-                Next <i class="fas fa-chevron-right"></i>
-            </button>`;
-        }
-        
-        container.innerHTML = paginationHTML;
+    function closeAuthModal() {
+        document.getElementById('authModal').style.display = 'none';
     }
 
-    function clearForm() {
-        document.getElementById('job-form').reset();
-        showToast('Form cleared', 'info');
-    }
-
-    // Export functions to global scope
+    // Global functions
     window.showSection = showSection;
-    window.clearForm = clearForm;
     window.showAuthModal = showAuthModal;
     window.closeAuthModal = closeAuthModal;
-    window.showRoleSelection = showRoleSelection;
-    window.showSignUp = showSignUp;
-    window.showLogin = showLogin;
-    window.selectRole = selectRole;
-    window.logout = logout;
-    window.formatPhoneNumber = formatPhoneNumber;
-    window.generateWhatsAppLink = generateWhatsAppLink;
+    window.formatPhoneNumber = function(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.startsWith('0')) value = value.substring(1);
+        if (value.length > 0 && !value.startsWith('254')) value = '254' + value;
+        if (value.length > 12) value = value.substring(0, 12);
+        input.value = value;
+    };
 
-    // Initialize the application
+    // Initialize when page loads
     document.addEventListener('DOMContentLoaded', initializeApp);
 </script>
 </body>
