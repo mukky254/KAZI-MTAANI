@@ -1949,126 +1949,179 @@
     </footer>
 
 <script>
-    // ========== COMPLETELY STANDALONE VERSION ==========
-    // This works even if the server is completely down
-    
+    // ========== CONFIGURATION ==========
+    const API_BASE_URL = 'https://backita.onrender.com';
+    console.log('🔧 Frontend configured with API:', API_BASE_URL);
+
+    // ========== STATE MANAGEMENT ==========
     let currentUser = null;
+    let selectedRole = null;
     let currentJobs = [];
     let currentEmployees = [];
+    let currentPage = 1;
+    const itemsPerPage = 5;
 
-    // Demo data
-    const demoJobs = [
-        {
-            id: '1',
-            title: 'Farm Worker - Maize Harvest',
-            description: 'Urgently needed: 10 farm workers for maize harvesting in Nakuru. Good pay, accommodation provided. Experience preferred but not required.',
-            location: 'Nakuru',
-            category: 'agriculture',
-            phone: '254712345678',
-            businessType: 'Green Valley Farm',
-            salary: 'KSh 15,000/month',
-            postedDate: new Date().toISOString()
-        },
-        {
-            id: '2', 
-            title: 'Construction Site Helper',
-            description: 'Construction company needs 5 helpers for new site in Kiambu. No experience needed. Training provided. Safety equipment provided.',
-            location: 'Kiambu',
-            category: 'construction', 
-            phone: '254723456789',
-            businessType: 'Metro Construction Ltd',
-            salary: 'KSh 20,000/month',
-            postedDate: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-            id: '3',
-            title: 'Domestic Worker - Live In',
-            description: 'Family in Nairobi needs reliable domestic helper for cooking, cleaning, and childcare. Must be honest, hardworking, and good with children.',
-            location: 'Nairobi',
-            category: 'domestic',
-            phone: '254734567890', 
-            businessType: 'Family Home',
-            salary: 'KSh 12,000/month + accommodation',
-            postedDate: new Date(Date.now() - 172800000).toISOString()
-        },
-        {
-            id: '4',
-            title: 'Delivery Driver - Motorcycle',
-            description: 'Delivery company needs motorcycle drivers for food delivery. Must have valid license and own helmet. Flexible hours, good tips.',
-            location: 'Mombasa',
-            category: 'driving',
-            phone: '254745678901',
-            businessType: 'QuickDeliver Ltd',
-            salary: 'KSh 18,000/month + bonuses',
-            postedDate: new Date(Date.now() - 259200000).toISOString()
-        }
-    ];
-
-    const demoEmployees = [
-        {
-            id: '1',
-            name: 'John Kamau',
-            phone: '254712345678',
-            location: 'Nakuru',
-            specialization: 'Farming, Construction, General Labor',
-            experience: '5 years in farming',
-            skills: 'Tractor operation, harvesting, animal care',
-            availability: 'Immediately',
-            joinDate: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-            id: '2',
-            name: 'Mary Wanjiku',
-            phone: '254723456789', 
-            location: 'Kiambu',
-            specialization: 'Domestic Work, Childcare, Cooking',
-            experience: '3 years domestic work',
-            skills: 'Cooking, cleaning, childcare, laundry',
-            availability: '1 week notice',
-            joinDate: new Date(Date.now() - 172800000).toISOString()
-        },
-        {
-            id: '3',
-            name: 'Peter Ochieng',
-            phone: '254734567890',
-            location: 'Nairobi',
-            specialization: 'Driving, Delivery, Security',
-            experience: '7 years driving experience',
-            skills: 'Motorcycle, car, delivery, security',
-            availability: 'Immediately', 
-            joinDate: new Date(Date.now() - 259200000).toISOString()
-        },
-        {
-            id: '4',
-            name: 'Grace Achieng',
-            phone: '254745678901',
-            location: 'Kisumu',
-            specialization: 'Retail, Customer Service, Sales',
-            experience: '4 years in retail',
-            skills: 'Customer service, sales, cash handling',
-            availability: '2 weeks notice',
-            joinDate: new Date(Date.now() - 345600000).toISOString()
-        }
-    ];
-
-    function initializeApp() {
-        console.log('🚀 Kazi Mashinani - Standalone Version');
+    // ========== INITIALIZATION ==========
+    async function initializeApp() {
+        console.log('🚀 Initializing Kazi Mashinani App...');
         
-        currentJobs = demoJobs;
-        currentEmployees = demoEmployees;
+        // Test server connection first
+        await testServerConnection();
         
-        displayJobs();
-        displayEmployees();
+        checkAuthentication();
+        setupAuthEventListeners();
         setupEventListeners();
         
-        showToast('✅ Kazi Mashinani is ready!', 'success');
+        // Load initial data
+        await loadInitialData();
+        
+        console.log('✅ App initialized successfully');
     }
 
+    async function testServerConnection() {
+        try {
+            console.log('🔌 Testing server connection to:', API_BASE_URL);
+            
+            // Test multiple endpoints
+            const endpoints = ['/health', '/jobs', '/employees'];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+                    const data = await response.json();
+                    console.log(`✅ ${endpoint}:`, data.success ? 'SUCCESS' : 'FAILED');
+                } catch (error) {
+                    console.log(`❌ ${endpoint}:`, error.message);
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ Server connection test failed:', error);
+        }
+    }
+
+    async function loadInitialData() {
+        await loadJobs();
+        await loadEmployees();
+    }
+
+    // ========== DATA LOADING ==========
+    async function loadJobs() {
+        try {
+            console.log('📡 Loading jobs from server...');
+            const response = await fetch(`${API_BASE_URL}/jobs`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('📊 Jobs response:', data);
+            
+            if (data.success && Array.isArray(data.jobs)) {
+                currentJobs = data.jobs;
+                console.log(`✅ Loaded ${currentJobs.length} jobs from server`);
+                displayJobs();
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (error) {
+            console.error('❌ Failed to load jobs:', error);
+            loadDemoJobs();
+        }
+    }
+
+    async function loadEmployees() {
+        try {
+            console.log('📡 Loading employees from server...');
+            const response = await fetch(`${API_BASE_URL}/employees`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('📊 Employees response:', data);
+            
+            if (data.success && Array.isArray(data.employees)) {
+                currentEmployees = data.employees;
+                console.log(`✅ Loaded ${currentEmployees.length} employees from server`);
+                displayEmployees();
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (error) {
+            console.error('❌ Failed to load employees:', error);
+            loadDemoEmployees();
+        }
+    }
+
+    function loadDemoJobs() {
+        console.log('📋 Loading demo jobs...');
+        currentJobs = [
+            {
+                _id: 'demo1',
+                title: 'Farm Worker - Maize Harvest',
+                description: 'Urgently needed: farm workers for maize harvesting. Good pay, accommodation provided.',
+                location: 'Nakuru',
+                category: 'agriculture',
+                phone: '254712345678',
+                businessType: 'Green Valley Farm',
+                postedDate: new Date().toISOString()
+            },
+            {
+                _id: 'demo2',
+                title: 'Construction Helper',
+                description: 'Construction site helpers needed. No experience required. Training provided.',
+                location: 'Kiambu',
+                category: 'construction',
+                phone: '254723456789',
+                businessType: 'Metro Construction',
+                postedDate: new Date().toISOString()
+            }
+        ];
+        displayJobs();
+        showToast('Using demo data - server connection issue', 'warning');
+    }
+
+    function loadDemoEmployees() {
+        console.log('📋 Loading demo employees...');
+        currentEmployees = [
+            {
+                _id: 'demo1',
+                name: 'John Kamau',
+                phone: '254712345678',
+                location: 'Nakuru',
+                specialization: 'Farming, Construction',
+                joinDate: new Date().toISOString()
+            },
+            {
+                _id: 'demo2', 
+                name: 'Mary Wanjiku',
+                phone: '254723456789',
+                location: 'Kiambu',
+                specialization: 'Domestic Work',
+                joinDate: new Date().toISOString()
+            }
+        ];
+        displayEmployees();
+    }
+
+    // ========== DISPLAY FUNCTIONS ==========
     function displayJobs() {
         const container = document.getElementById('job-listings');
-        if (!container) return;
+        if (!container) {
+            console.log('❌ Job listings container not found');
+            return;
+        }
         
-        container.innerHTML = demoJobs.map(job => `
+        if (currentJobs.length === 0) {
+            container.innerHTML = '<div class="message info">No jobs available at the moment.</div>';
+            return;
+        }
+        
+        console.log('🎨 Displaying jobs:', currentJobs.length);
+        container.innerHTML = currentJobs.map(job => `
             <div class="job-listing">
                 <div class="job-details">
                     <div class="job-content">
@@ -2080,20 +2133,20 @@
                                 <span>${job.location}</span>
                             </div>
                             <div class="meta-item">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>${job.salary}</span>
+                                <i class="fas fa-building"></i>
+                                <span>${job.businessType || 'Individual'}</span>
                             </div>
                             <div class="meta-item">
-                                <i class="fas fa-building"></i>
-                                <span>${job.businessType}</span>
+                                <i class="fas fa-calendar"></i>
+                                <span>${new Date(job.postedDate).toLocaleDateString()}</span>
                             </div>
                         </div>
                     </div>
                     <div class="communication">
                         <a href="tel:${job.phone}" class="btn-call">
-                            <i class="fas fa-phone"></i> Call Now
+                            <i class="fas fa-phone"></i> Call
                         </a>
-                        <a href="https://wa.me/${job.phone}?text=Hi, I'm interested in the ${job.title} position in ${job.location}" 
+                        <a href="${generateWhatsAppLink(job.phone, 'Hi, I am interested in the ' + job.title + ' position')}" 
                            class="btn-whatsapp" target="_blank">
                             <i class="fab fa-whatsapp"></i> WhatsApp
                         </a>
@@ -2105,15 +2158,23 @@
 
     function displayEmployees() {
         const container = document.getElementById('employee-listings');
-        if (!container) return;
+        if (!container) {
+            console.log('❌ Employee listings container not found');
+            return;
+        }
         
-        container.innerHTML = demoEmployees.map(employee => `
+        if (currentEmployees.length === 0) {
+            container.innerHTML = '<div class="message info">No employees available at the moment.</div>';
+            return;
+        }
+        
+        console.log('🎨 Displaying employees:', currentEmployees.length);
+        container.innerHTML = currentEmployees.map(employee => `
             <div class="employee-listing">
                 <div class="employee-details">
                     <div class="employee-content">
                         <h3>${employee.name}</h3>
-                        <p><strong>Specialization:</strong> ${employee.specialization}</p>
-                        <p><strong>Experience:</strong> ${employee.experience}</p>
+                        <p>${employee.specialization || 'General worker'}</p>
                         <div class="employee-meta">
                             <div class="meta-item">
                                 <i class="fas fa-map-marker-alt"></i>
@@ -2121,11 +2182,7 @@
                             </div>
                             <div class="meta-item">
                                 <i class="fas fa-briefcase"></i>
-                                <span>${employee.availability}</span>
-                            </div>
-                            <div class="meta-item">
-                                <i class="fas fa-star"></i>
-                                <span>${employee.skills.split(', ')[0]}</span>
+                                <span>Available for work</span>
                             </div>
                         </div>
                     </div>
@@ -2133,7 +2190,7 @@
                         <a href="tel:${employee.phone}" class="btn-call">
                             <i class="fas fa-phone"></i> Call
                         </a>
-                        <a href="https://wa.me/${employee.phone}?text=Hi ${employee.name}, I have a job opportunity for you" 
+                        <a href="${generateWhatsAppLink(employee.phone, 'Hi, I have a job opportunity for you')}" 
                            class="btn-whatsapp" target="_blank">
                             <i class="fab fa-whatsapp"></i> WhatsApp
                         </a>
@@ -2143,42 +2200,215 @@
         `).join('');
     }
 
+    // ========== AUTHENTICATION ==========
+    function checkAuthentication() {
+        const token = localStorage.getItem('token');
+        const userData = localStorage.getItem('user');
+        
+        if (token && userData) {
+            try {
+                currentUser = JSON.parse(userData);
+                updateUIForAuthenticatedUser();
+                console.log('🔐 User authenticated:', currentUser.name);
+            } catch (e) {
+                console.error('❌ Error parsing user data:', e);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+            }
+        } else {
+            updateUIForGuest();
+        }
+    }
+
+    function setupAuthEventListeners() {
+        const signupForm = document.getElementById('signup-form');
+        const signinForm = document.getElementById('signin-form');
+        
+        if (signupForm) {
+            signupForm.addEventListener('submit', handleSignUp);
+            console.log('✅ Signup form listener added');
+        }
+        if (signinForm) {
+            signinForm.addEventListener('submit', handleSignIn);
+            console.log('✅ Signin form listener added');
+        }
+    }
+
+    async function handleSignUp(e) {
+        e.preventDefault();
+        console.log('📝 Handling signup...');
+        
+        const name = document.getElementById('signup-name').value.trim();
+        const phone = document.getElementById('signup-phone').value.trim();
+        const location = document.getElementById('signup-location').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const confirmPassword = document.getElementById('signup-confirm-password').value;
+        
+        if (!name || !phone || !location || !password) {
+            showToast('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            showToast('Passwords do not match', 'error');
+            return;
+        }
+        
+        const cleanPhone = phone.replace(/\D/g, '');
+        
+        try {
+            console.log('📤 Sending signup request...');
+            const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name,
+                    phone: cleanPhone,
+                    location,
+                    password,
+                    role: selectedRole || 'employee',
+                    specialization: document.getElementById('signup-specialization')?.value || '',
+                    jobType: document.getElementById('signup-job-type')?.value || ''
+                })
+            });
+            
+            const data = await response.json();
+            console.log('📥 Signup response:', data);
+            
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                currentUser = data.user;
+                
+                showToast('Account created successfully! Welcome to Kazi Mashinani', 'success');
+                closeAuthModal();
+                updateUIForAuthenticatedUser();
+                showSection('home');
+            } else {
+                showToast(data.error || 'Sign up failed', 'error');
+            }
+        } catch (error) {
+            console.error('❌ Sign up error:', error);
+            showToast('Network error. Please check your connection.', 'error');
+        }
+    }
+
+    async function handleSignIn(e) {
+        e.preventDefault();
+        console.log('🔐 Handling signin...');
+        
+        const phone = document.getElementById('signin-phone').value.trim();
+        const password = document.getElementById('signin-password').value;
+        
+        if (!phone || !password) {
+            showToast('Please enter phone number and password', 'error');
+            return;
+        }
+        
+        const cleanPhone = phone.replace(/\D/g, '');
+        
+        try {
+            console.log('📤 Sending signin request...');
+            const response = await fetch(`${API_BASE_URL}/auth/signin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    phone: cleanPhone,
+                    password
+                })
+            });
+            
+            const data = await response.json();
+            console.log('📥 Signin response:', data);
+            
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                currentUser = data.user;
+                
+                showToast('Welcome back! ' + data.user.name, 'success');
+                closeAuthModal();
+                updateUIForAuthenticatedUser();
+                showSection('home');
+            } else {
+                showToast(data.error || 'Sign in failed', 'error');
+            }
+        } catch (error) {
+            console.error('❌ Sign in error:', error);
+            showToast('Network error. Please check your connection.', 'error');
+        }
+    }
+
+    function updateUIForAuthenticatedUser() {
+        const headerRight = document.querySelector('.header-right');
+        const existingUserInfo = document.querySelector('.user-info');
+        
+        if (existingUserInfo) {
+            existingUserInfo.remove();
+        }
+        
+        const userInfo = document.createElement('div');
+        userInfo.className = 'user-info';
+        userInfo.onclick = () => showSection('profile');
+        userInfo.innerHTML = `
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="user-name">${currentUser.name}</div>
+        `;
+        
+        headerRight.appendChild(userInfo);
+        console.log('✅ UI updated for authenticated user');
+    }
+
+    function updateUIForGuest() {
+        const userInfo = document.querySelector('.user-info');
+        if (userInfo) {
+            userInfo.remove();
+        }
+        console.log('✅ UI updated for guest');
+    }
+
+    // ========== UTILITY FUNCTIONS ==========
+    function formatPhoneNumber(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.startsWith('0')) value = value.substring(1);
+        if (value.length > 0 && !value.startsWith('254')) value = '254' + value;
+        if (value.length > 12) value = value.substring(0, 12);
+        input.value = value;
+    }
+
+    function formatPhoneForCall(phone) {
+        if (!phone) return '';
+        let digits = phone.replace(/\D/g, '');
+        return '+254' + (digits.startsWith('254') ? digits.substring(3) : digits);
+    }
+
+    function generateWhatsAppLink(phone, message) {
+        const formattedPhone = formatPhoneForCall(phone);
+        return `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodeURIComponent(message)}`;
+    }
+
     function showToast(message, type) {
-        // Create toast container if it doesn't exist
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 10000;
-            `;
-            document.body.appendChild(container);
+        const toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            console.log('❌ Toast container not found');
+            return;
         }
         
         const toast = document.createElement('div');
-        toast.style.cssText = `
-            background: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-left: 4px solid ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
-            animation: slideInRight 0.3s ease;
-        `;
-        
+        toast.className = `toast ${type}`;
         toast.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}" 
-               style="color: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'}"></i>
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
             <div>${message}</div>
         `;
         
-        container.appendChild(toast);
+        toastContainer.appendChild(toast);
+        console.log('📢 Toast:', message);
         
         setTimeout(() => {
             toast.remove();
@@ -2186,6 +2416,8 @@
     }
 
     function showSection(sectionId) {
+        console.log('🎯 Showing section:', sectionId);
+        
         // Hide all sections
         document.querySelectorAll('section').forEach(section => {
             section.style.display = 'none';
@@ -2202,15 +2434,16 @@
             item.classList.remove('active');
         });
         
-        document.querySelectorAll('.nav-item').forEach(item => {
-            if (item.getAttribute('onclick')?.includes(sectionId)) {
-                item.classList.add('active');
-            }
-        });
+        const activeItem = Array.from(document.querySelectorAll('.nav-item'))
+            .find(item => item.getAttribute('onclick')?.includes(sectionId));
+            
+        if (activeItem) {
+            activeItem.classList.add('active');
+        }
     }
 
     function setupEventListeners() {
-        // Nav items
+        // Navigation
         document.querySelectorAll('.nav-item').forEach(item => {
             const onclick = item.getAttribute('onclick');
             if (!onclick) {
@@ -2218,7 +2451,14 @@
                 item.addEventListener('click', () => showSection(text));
             }
         });
-        
+
+        // Job form
+        const jobForm = document.getElementById('job-form');
+        if (jobForm) {
+            jobForm.addEventListener('submit', handleJobSubmit);
+            console.log('✅ Job form listener added');
+        }
+
         // Auth modal
         const authModal = document.getElementById('authModal');
         if (authModal) {
@@ -2228,28 +2468,135 @@
         }
     }
 
+    async function handleJobSubmit(e) {
+        e.preventDefault();
+        console.log('📮 Handling job submission...');
+        
+        if (!currentUser) {
+            showAuthModal();
+            return;
+        }
+
+        const jobData = {
+            title: document.getElementById('job-title').value.trim(),
+            description: document.getElementById('job-description').value.trim(),
+            location: document.getElementById('job-location').value.trim(),
+            category: document.getElementById('job-category').value,
+            phone: document.getElementById('employer-phone').value.trim(),
+            whatsapp: document.getElementById('employer-whatsapp').value.trim(),
+            businessType: document.getElementById('business-type').value.trim() || 'Individual',
+            employerId: currentUser._id,
+            employerName: currentUser.name
+        };
+
+        try {
+            console.log('📤 Sending job post request...');
+            const response = await fetch(`${API_BASE_URL}/jobs`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jobData)
+            });
+
+            const result = await response.json();
+            console.log('📥 Job post response:', result);
+
+            if (result.success) {
+                showToast('Job posted successfully!', 'success');
+                document.getElementById('job-form').reset();
+                await loadJobs(); // Reload jobs
+            } else {
+                throw new Error(result.error || 'Failed to post job');
+            }
+            
+        } catch (error) {
+            console.error('❌ Post job error:', error);
+            showToast('Failed to post job. Please try again.', 'error');
+        }
+    }
+
+    // ========== AUTH MODAL FUNCTIONS ==========
     function showAuthModal() {
         document.getElementById('authModal').style.display = 'flex';
+        showRoleSelection();
     }
 
     function closeAuthModal() {
         document.getElementById('authModal').style.display = 'none';
     }
 
-    // Global functions
+    function showRoleSelection() {
+        document.getElementById('role-selection').style.display = 'block';
+        document.getElementById('signup-form').style.display = 'none';
+        document.getElementById('signin-form').style.display = 'none';
+        selectedRole = null;
+        
+        document.querySelectorAll('.auth-option').forEach(option => {
+            option.classList.remove('active');
+        });
+    }
+
+    function showSignUp() {
+        if (!selectedRole) return;
+        
+        document.getElementById('role-selection').style.display = 'none';
+        document.getElementById('signup-form').style.display = 'block';
+        document.getElementById('signin-form').style.display = 'none';
+        
+        if (selectedRole === 'employee') {
+            document.getElementById('signup-name-label').textContent = 'Full Name *';
+            document.getElementById('specialization-group').style.display = 'block';
+            document.getElementById('job-type-group').style.display = 'none';
+        } else {
+            document.getElementById('signup-name-label').textContent = 'Business/Organization Name *';
+            document.getElementById('specialization-group').style.display = 'none';
+            document.getElementById('job-type-group').style.display = 'block';
+        }
+    }
+
+    function showLogin() {
+        document.getElementById('role-selection').style.display = 'none';
+        document.getElementById('signup-form').style.display = 'none';
+        document.getElementById('signin-form').style.display = 'block';
+    }
+
+    function selectRole(role) {
+        selectedRole = role;
+        document.querySelectorAll('.auth-option').forEach(option => {
+            option.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+        
+        setTimeout(() => {
+            showSignUp();
+        }, 300);
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        currentUser = null;
+        updateUIForGuest();
+        showSection('home');
+        showToast('You have been signed out', 'info');
+    }
+
+    // ========== GLOBAL EXPORTS ==========
     window.showSection = showSection;
     window.showAuthModal = showAuthModal;
     window.closeAuthModal = closeAuthModal;
-    window.formatPhoneNumber = function(input) {
-        let value = input.value.replace(/\D/g, '');
-        if (value.startsWith('0')) value = value.substring(1);
-        if (value.length > 0 && !value.startsWith('254')) value = '254' + value;
-        if (value.length > 12) value = value.substring(0, 12);
-        input.value = value;
-    };
+    window.showRoleSelection = showRoleSelection;
+    window.showSignUp = showSignUp;
+    window.showLogin = showLogin;
+    window.selectRole = selectRole;
+    window.logout = logout;
+    window.formatPhoneNumber = formatPhoneNumber;
+    window.generateWhatsAppLink = generateWhatsAppLink;
 
-    // Initialize when page loads
+    // ========== INITIALIZE APP ==========
     document.addEventListener('DOMContentLoaded', initializeApp);
+    console.log('📋 DOM loaded - app will initialize');
 </script>
 </body>
 </html>
